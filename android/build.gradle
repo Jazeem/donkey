@@ -19,7 +19,7 @@ android {
     }
     defaultConfig {
         applicationId "com.procrastinators.donkey"
-        minSdkVersion 9
+        minSdkVersion 24
         targetSdkVersion 25
     }
 }

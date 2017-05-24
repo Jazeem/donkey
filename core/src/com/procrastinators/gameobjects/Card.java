@@ -8,6 +8,42 @@ public class Card {
     String suit;
     char value;
     int code; //code from 0 indicating the position of card in cards.png
+    float x,y;
+    int valueCode; //code to compare which card is highest in a suit
+
+    public int getValueCode() {
+        return valueCode;
+    }
+
+    public void setValueCode(int valueCode) {
+        this.valueCode = valueCode;
+    }
+
+    public int getOwner() {
+        return owner;
+    }
+
+    public void setOwner(int owner) {
+        this.owner = owner;
+    }
+
+    int owner;
+
+    public float getX() {
+        return x;
+    }
+
+    public void setX(float x) {
+        this.x = x;
+    }
+
+    public float getY() {
+        return y;
+    }
+
+    public void setY(float y) {
+        this.y = y;
+    }
 
     public String getSuit() {
         return suit;

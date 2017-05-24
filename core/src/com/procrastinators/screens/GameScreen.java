@@ -13,7 +13,6 @@ import com.procrastinators.gameworld.GameWorld;
 public class GameScreen implements Screen {
     private GameWorld world;
     private GameRenderer renderer;
-
     public GameScreen() {
         Gdx.app.log("GameScreen", "Attached");
         world = new GameWorld();
