@@ -146,6 +146,9 @@ public class GameWorld {
                     case 0:
                         value = 'A';
                         break;
+                    case 9:
+                        value = '0'; // 0 represents 10
+                        break;
                     case 10:
                         value = 'J';
                         break;
@@ -197,73 +200,98 @@ public class GameWorld {
         return pileCards;
     }
 
+    private void checkForDiscard(){
+        if(discarding){
+            players.get(playerToCollect).addAll(pileCards);
+            pileCards = new ArrayList<Card>();
+        }
+        discarding = false;
+        playerToCollect = -1;
+    }
+
+    private void checkForGameEnd(){
+        if(pileCards.size() <= 1 && players.size() <= 2){
+            if(players.size() == 1){
+                gameFinished = true;
+                return;
+            }
+            else{
+                int otherPlayer = -1;
+                for(int key: players.keySet()){
+                    if(key != turn){
+                        otherPlayer = key;
+                        break;
+                    }
+                }
+                if(players.get(otherPlayer).size() == 0){
+                    players.remove(otherPlayer);
+                    gameFinished = true;
+                    return;
+                }
+            }
+        }
+    }
+
+    private void playCard(){
+        Card toPlay = null;
+        if(firstRound && pileCards.size() == 0){
+            toPlay = players.get(turn).stream().filter(x -> x.getCode() == Constants.SPADE_ACE_CODE).findFirst().orElse(null);
+        }
+        else {
+            do{
+                int cardsLeft = players.get(turn).size();
+                toPlay = players.get(turn).get(random.nextInt(cardsLeft));
+            }while (!isValidCard(toPlay));
+        }
+        if(pileCards.size() >= players.size())
+            pileCards = new ArrayList<Card>();
+        float pileCardLength = Constants.CARD_WIDTH + (players.size()-1)*Constants.CARD_SEPERATION;
+        toPlay.setX((Constants.GAME_WIDTH-pileCardLength)/2 + pileCards.size()*Constants.CARD_SEPERATION);
+        toPlay.setY((float) (Constants.GAME_HEIGHT-Constants.CARD_HEIGHT)/2);
+        Card finalToPlay = toPlay; // variables used in lambda should be final
+        players.get(turn).removeIf(x -> x.getCode() == finalToPlay.getCode());
+        if(pileCards.size() > 0){
+            if(!toPlay.getSuit().equals(pileCards.get(0).getSuit())){
+                discarding = true;
+                Card highestValue = Collections.max(pileCards, Comparator.comparing(c -> c.getValueCode()));
+                playerToCollect = highestValue.getOwner();
+            }
+        }
+        pileCards.add(toPlay);
+        firstRound = false;
+    }
+
+    private void decideNextTurn(){
+        if(discarding)
+            turn = playerToCollect;
+        else if(pileCards.size() != players.size())
+            turn = turn == numPlayers - 1  ? 0 : turn + 1;
+        else {
+            Card highestValue = Collections.max(pileCards, Comparator.comparing(c -> c.getValueCode()));
+            turn = highestValue.getOwner();
+        }
+    }
+
+    private void logAllCards(){
+        for(int key: players.keySet()){
+            String s = "";
+            for(Card c: players.get(key))
+                s += c.getSuit() + c.getValue() + " ";
+            Gdx.app.log(key+"",s+"");
+        }
+    }
+
     private void playTurn(){
         if(!gameFinished){
-            if(discarding){
-                players.get(playerToCollect).addAll(pileCards);
-                pileCards = new ArrayList<Card>();
-            }
-            discarding = false;
-            playerToCollect = -1;
+            checkForDiscard();
+            arrangeCards(); // needed here becuase ownership assignment needs to get changed.
             if(players.containsKey(turn) && players.get(turn).size() > 0){
-                if(pileCards.size() <= 1 && players.size() <= 2){
-                    if(players.size() == 1){
-                        gameFinished = true;
-                        return;
-                    }
-                    else{
-                        int otherPlayer = -1;
-                        for(int key: players.keySet()){
-                            if(key != turn){
-                                otherPlayer = key;
-                                break;
-                            }
-                        }
-                        if(players.get(otherPlayer).size() == 0){
-                            players.remove(otherPlayer);
-                            gameFinished = true;
-                            return;
-                        }
-                    }
-                }
-                Card toPlay = null;
-                if(firstRound && pileCards.size() == 0){
-                    toPlay = players.get(turn).stream().filter(x -> x.getCode() == Constants.SPADE_ACE_CODE).findFirst().orElse(null);
-                }
-                else {
-                    do{
-                        int cardsLeft = players.get(turn).size();
-                        toPlay = players.get(turn).get(random.nextInt(cardsLeft));
-                    }while (!isValidCard(toPlay));
-                }
-                if(pileCards.size() >= players.size())
-                    pileCards = new ArrayList<Card>();
-                float pileCardLength = Constants.CARD_WIDTH + (players.size()-1)*Constants.CARD_SEPERATION;
-                toPlay.setX((Constants.GAME_WIDTH-pileCardLength)/2 + pileCards.size()*Constants.CARD_SEPERATION);
-                toPlay.setY((float) (Constants.GAME_HEIGHT-Constants.CARD_HEIGHT)/2);
-                Card finalToPlay = toPlay; // variables used in lambda should be final
-                players.get(turn).removeIf(x -> x.getCode() == finalToPlay.getCode());
-                if(pileCards.size() > 0){
-                    if(!toPlay.getSuit().equals(pileCards.get(0).getSuit())){
-                        discarding = true;
-                        Card highestValue = Collections.max(pileCards, Comparator.comparing(c -> c.getValueCode()));
-                        playerToCollect = highestValue.getOwner();
-                    }
-                }
-                pileCards.add(toPlay);
-                firstRound = false;
+                checkForGameEnd();
+                playCard();
             }
             else
                 players.remove(turn);
-
-            if(discarding)
-                turn = playerToCollect;
-            else if(pileCards.size() != players.size())
-                turn = turn == numPlayers - 1  ? 0 : turn + 1;
-            else {
-                Card highestValue = Collections.max(pileCards, Comparator.comparing(c -> c.getValueCode()));
-                turn = highestValue.getOwner();
-            }
+            decideNextTurn();
         }
         arrangeCards();
     }
