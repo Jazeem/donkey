@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.procrastinators.gameobjects.Card;
 import com.procrastinators.helpers.AssetLoader;
@@ -62,8 +63,15 @@ public class GameRenderer {
                 batcher.setColor(Color.WHITE);
             ArrayList<Card> player = myWorld.getPlayers().get(i);
             if(player != null){ // player could've finished the game.
-                for (int j=0;j<player.size();j++){
-                    batcher.draw(AssetLoader.cards[player.get(j).getCode()], player.get(j).getX(),player.get(j).getY(), Constants.CARD_WIDTH, Constants.CARD_HEIGHT);
+                if(i != myWorld.getPlayer() && Constants.FLIP_OPPONENT_CARDS){
+                    for (int j=0;j<player.size();j++){
+                        batcher.draw(AssetLoader.cardBack, player.get(j).getX(),player.get(j).getY(), Constants.CARD_WIDTH, Constants.CARD_HEIGHT);
+                    }
+                }
+                else{
+                    for (int j=0;j<player.size();j++){
+                        batcher.draw(AssetLoader.cards[player.get(j).getCode()], player.get(j).getX(),player.get(j).getY(), Constants.CARD_WIDTH, Constants.CARD_HEIGHT);
+                    }
                 }
             }
         }

@@ -5,6 +5,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.procrastinators.gameworld.GameRenderer;
 import com.procrastinators.gameworld.GameWorld;
+import com.procrastinators.helpers.InputHandler;
 
 /**
  * Created by jazeem on 23/05/17.
@@ -17,6 +18,7 @@ public class GameScreen implements Screen {
         Gdx.app.log("GameScreen", "Attached");
         world = new GameWorld();
         renderer = new GameRenderer(world);
+        Gdx.input.setInputProcessor(new InputHandler(world));
     }
 
     @Override

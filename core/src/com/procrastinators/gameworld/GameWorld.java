@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 /**
  * Created by jazeem on 23/05/17.
@@ -182,15 +183,18 @@ public class GameWorld {
         return turn;
     }
 
+    public int getPlayer() {
+        return player;
+    }
+
     public void update(float delta) {
-        //Gdx.app.log("GameWorld", "update");
-//        if(turn == player)
-//            playerTurn = true;
-//        else
-//            playerTurn = false;
         runTime += delta;
+        if(turn == player && players.get(player).size()>0){
+            runTime = turnThreshold - Constants.TURN_TIME;
+            arrangeCards(); //needed here for player to collect discarding cards.
+        }
         if(runTime > turnThreshold){
-            playTurn();
+            playTurn(null);
             turnThreshold += Constants.TURN_TIME;
         }
 
@@ -232,19 +236,21 @@ public class GameWorld {
         }
     }
 
-    private void playCard(){
+    private void playCard(Card userSelected){
         Card toPlay = null;
-        if(firstRound && pileCards.size() == 0){
-            toPlay = players.get(turn).stream().filter(x -> x.getCode() == Constants.SPADE_ACE_CODE).findFirst().orElse(null);
+        if(userSelected == null){
+            if(firstRound && pileCards.size() == 0){
+                toPlay = players.get(turn).stream().filter(x -> x.getCode() == Constants.SPADE_ACE_CODE).findFirst().orElse(null);
+            }
+            else {
+                do{
+                    int cardsLeft = players.get(turn).size();
+                    toPlay = players.get(turn).get(random.nextInt(cardsLeft));
+                }while (!isValidCard(toPlay));
+            }
         }
-        else {
-            do{
-                int cardsLeft = players.get(turn).size();
-                toPlay = players.get(turn).get(random.nextInt(cardsLeft));
-            }while (!isValidCard(toPlay));
-        }
-        if(pileCards.size() >= players.size())
-            pileCards = new ArrayList<Card>();
+        else
+            toPlay = userSelected;
         float pileCardLength = Constants.CARD_WIDTH + (players.size()-1)*Constants.CARD_SEPERATION;
         toPlay.setX((Constants.GAME_WIDTH-pileCardLength)/2 + pileCards.size()*Constants.CARD_SEPERATION);
         toPlay.setY((float) (Constants.GAME_HEIGHT-Constants.CARD_HEIGHT)/2);
@@ -274,6 +280,20 @@ public class GameWorld {
         }
     }
 
+    public void userTouched(int x, int y){
+        if(turn == player){
+            checkPileCards(); // only called after user touch so that user can observe last pile.
+            List<Card> touchedCards = players.get(player).stream().filter(i -> x >= i.getX() && x <= i.getX()+Constants.CARD_WIDTH
+                    && y >= i.getY() && y <= i.getY()+Constants.CARD_HEIGHT)
+                    .collect(Collectors.toList());
+            Card userSelected = touchedCards.get(touchedCards.size() - 1); //because touch is intercepted by cards beneath the stack
+            if(isValidCard(userSelected))
+                playTurn(userSelected);
+        }
+
+        //Gdx.app.log("touched", touchedCards.get(touchedCards.size() - 1).getValue() + "");
+    }
+
     private void logAllCards(){
         for(int key: players.keySet()){
             String s = "";
@@ -283,13 +303,19 @@ public class GameWorld {
         }
     }
 
-    private void playTurn(){
+    private void checkPileCards(){
+        if(pileCards.size() >= players.size())
+            pileCards = new ArrayList<Card>();
+    }
+
+    private void playTurn(Card userSelected){
         if(!gameFinished){
             checkForDiscard();
-            arrangeCards(); // needed here becuase ownership assignment needs to get changed.
+            arrangeCards(); // needed here because ownership assignment needs to get changed.
+            checkPileCards();
             if(players.containsKey(turn) && players.get(turn).size() > 0){
                 checkForGameEnd();
-                playCard();
+                playCard(userSelected);
             }
             else
                 players.remove(turn);

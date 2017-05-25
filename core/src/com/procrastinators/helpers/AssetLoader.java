@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 public class AssetLoader {
     public static Texture texture;
     public static TextureRegion cards[] = new TextureRegion[52];
+    public static TextureRegion cardBackRegion;
     public static Texture cardBack;
     public static void load(){
         texture = new Texture(Gdx.files.internal("cards.png"));
@@ -25,6 +26,8 @@ public class AssetLoader {
 
         cardBack = new Texture(Gdx.files.internal("card_back.jpg"));
         cardBack.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+
+        cardBackRegion = new TextureRegion(cardBack, 0, 0, cardBack.getWidth(), cardBack.getHeight());
     }
 
     public static void dispose(){

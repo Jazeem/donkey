@@ -1,12 +1,17 @@
 package com.procrastinators.helpers;
 
 import com.badlogic.gdx.InputProcessor;
+import com.procrastinators.gameworld.GameWorld;
 
 /**
  * Created by jazeem on 24/05/17.
  */
 
 public class InputHandler implements InputProcessor {
+    private GameWorld gameWorld;
+    public InputHandler(GameWorld world){
+        gameWorld = world;
+    }
     @Override
     public boolean keyDown(int keycode) {
         return false;
@@ -29,7 +34,8 @@ public class InputHandler implements InputProcessor {
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        return false;
+        gameWorld.userTouched(screenX, screenY);
+        return true;
     }
 
     @Override
