@@ -264,8 +264,10 @@ public class GameWorld {
     private void decideNextTurn(){
         if(discarding)
             turn = playerToCollect;
-        else if(pileCards.size() != players.size())
-            turn = turn == numPlayers - 1  ? 0 : turn + 1;
+        else if(pileCards.size() != players.size()){
+            int earliestPlayer = players.keySet().stream().min(Comparator.comparing(c -> c)).orElse(-1);
+            turn = players.keySet().stream().filter(x -> x.intValue() > turn).min(Comparator.comparing(c -> c)).orElse(earliestPlayer);
+        }
         else {
             Card highestValue = Collections.max(pileCards, Comparator.comparing(c -> c.getValueCode()));
             turn = highestValue.getOwner();
