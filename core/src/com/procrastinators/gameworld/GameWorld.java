@@ -12,9 +12,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 /**
  * Created by jazeem on 23/05/17.
@@ -75,6 +73,7 @@ public class GameWorld {
         opponentCardOffset += 2 * (playerCardLength + Constants.OPPONENT_CARD_GAP);
         for(int i=0;i<numPlayers;i++){
             if(players.containsKey(i)) { //player could've finished the game
+                Collections.sort(players.get(i));
                 if(i == player){
                     float cardsOffset = (Constants.GAME_WIDTH - playerCardLength)/2;
                     for(int j=0;j<players.get(i).size();j++){
@@ -240,7 +239,11 @@ public class GameWorld {
         Card toPlay = null;
         if(userSelected == null){
             if(firstRound && pileCards.size() == 0){
-                toPlay = players.get(turn).stream().filter(x -> x.getCode() == Constants.SPADE_ACE_CODE).findFirst().orElse(null);
+                for(Card card: players.get(turn))
+                    if(card.getCode() == Constants.SPADE_ACE_CODE){
+                        toPlay = card;
+                        break;
+                    }
             }
             else {
                 do{
@@ -254,41 +257,64 @@ public class GameWorld {
         float pileCardLength = Constants.CARD_WIDTH + (players.size()-1)*Constants.CARD_SEPERATION;
         toPlay.setX((Constants.GAME_WIDTH-pileCardLength)/2 + pileCards.size()*Constants.CARD_SEPERATION);
         toPlay.setY((float) (Constants.GAME_HEIGHT-Constants.CARD_HEIGHT)/2);
-        Card finalToPlay = toPlay; // variables used in lambda should be final
-        players.get(turn).removeIf(x -> x.getCode() == finalToPlay.getCode());
+        players.get(turn).remove(toPlay);
         if(pileCards.size() > 0){
             if(!toPlay.getSuit().equals(pileCards.get(0).getSuit())){
                 discarding = true;
-                Card highestValue = Collections.max(pileCards, Comparator.comparing(c -> c.getValueCode()));
-                playerToCollect = highestValue.getOwner();
+                playerToCollect = findOwnerOfHighestCardInPile();
             }
         }
         pileCards.add(toPlay);
         firstRound = false;
     }
 
+    private int findOwnerOfHighestCardInPile(){
+        Card highestValue = pileCards.get(0);
+        int maxValue = pileCards.get(0).getValueCode();
+        for(Card card: pileCards){
+            if(card.getValueCode() > maxValue){
+                maxValue = card.getValueCode();
+                highestValue = card;
+            }
+        }
+        return highestValue.getOwner();
+    }
+
     private void decideNextTurn(){
         if(discarding)
             turn = playerToCollect;
         else if(pileCards.size() != players.size()){
-            int earliestPlayer = players.keySet().stream().min(Comparator.comparing(c -> c)).orElse(-1);
-            turn = players.keySet().stream().filter(x -> x.intValue() > turn).min(Comparator.comparing(c -> c)).orElse(earliestPlayer);
+            int earliestPlayer = Collections.min(players.keySet()); //could change players to List instead of map to make this code a bit cleaner
+            List<Integer> possiblePlayersForNextTurn = new ArrayList<Integer>();
+            for(int nextTurn:players.keySet()){
+                if(nextTurn > turn)
+                    possiblePlayersForNextTurn.add(nextTurn);
+            }
+            if(possiblePlayersForNextTurn.size() == 0)
+                turn = earliestPlayer;
+            else
+                turn = Collections.min(possiblePlayersForNextTurn);
         }
         else {
-            Card highestValue = Collections.max(pileCards, Comparator.comparing(c -> c.getValueCode()));
-            turn = highestValue.getOwner();
+            turn = findOwnerOfHighestCardInPile();
         }
     }
 
     public void userTouched(int x, int y){
         if(turn == player){
             checkPileCards(); // only called after user touch so that user can observe last pile.
-            List<Card> touchedCards = players.get(player).stream().filter(i -> x >= i.getX() && x <= i.getX()+Constants.CARD_WIDTH
-                    && y >= i.getY() && y <= i.getY()+Constants.CARD_HEIGHT)
-                    .collect(Collectors.toList());
-            Card userSelected = touchedCards.get(touchedCards.size() - 1); //because touch is intercepted by cards beneath the stack
-            if(isValidCard(userSelected))
-                playTurn(userSelected);
+            checkForDiscard(); //called so that if user has discarded cards to collect he can have them.
+            List<Card> touchedCards = new ArrayList<Card>();
+            for(Card card: players.get(player)){
+                if(x >= card.getX() && x <= card.getX()+Constants.CARD_WIDTH
+                        && y >= card.getY() && y <= card.getY()+Constants.CARD_HEIGHT)
+                    touchedCards.add(card);
+            }
+            if(touchedCards.size() > 0){
+                Card userSelected = touchedCards.get(touchedCards.size() - 1); //because touch is intercepted by cards beneath the stack
+                if(isValidCard(userSelected))
+                    playTurn(userSelected);
+            }
         }
 
         //Gdx.app.log("touched", touchedCards.get(touchedCards.size() - 1).getValue() + "");
@@ -327,7 +353,14 @@ public class GameWorld {
     private boolean isValidCard(Card card){
         if(pileCards.size() == 0)
             return true;
-        if(players.get(turn).stream().filter(x -> x.getSuit().equals(pileCards.get(0).getSuit())).count() == 0)
+        boolean suitExists = false;
+        for(Card playerCard: players.get(turn)){
+            if(playerCard.getSuit().equals(pileCards.get(0).getSuit())){
+                suitExists = true;
+                break;
+            }
+        }
+        if(!suitExists)
             return true;
         return pileCards.get(0).getSuit().equals(card.getSuit());
     }
