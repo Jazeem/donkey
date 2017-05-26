@@ -69,16 +69,17 @@ public class GameWorld {
 
     private void arrangeCards(){
         float playerCardLength = Constants.CARD_WIDTH + (playerCardCount-1)*Constants.CARD_SEPERATION;
+        float userPlayerCardLength = Constants.USER_CARD_WIDTH + (playerCardCount-1)*Constants.USER_CARD_SEPERATION;
         float opponentCardOffset = (Constants.GAME_WIDTH - ((numPlayers - 1)*playerCardLength + (numPlayers - 2)*Constants.OPPONENT_CARD_GAP))/2;
         opponentCardOffset += 2 * (playerCardLength + Constants.OPPONENT_CARD_GAP);
         for(int i=0;i<numPlayers;i++){
             if(players.containsKey(i)) { //player could've finished the game
                 Collections.sort(players.get(i));
                 if(i == player){
-                    float cardsOffset = (Constants.GAME_WIDTH - playerCardLength)/2;
+                    float cardsOffset = (Constants.GAME_WIDTH - userPlayerCardLength)/2;
                     for(int j=0;j<players.get(i).size();j++){
-                        players.get(i).get(j).setX(Constants.CARD_SEPERATION*j + cardsOffset);
-                        players.get(i).get(j).setY(Constants.GAME_HEIGHT-Constants.CARD_HEIGHT);
+                        players.get(i).get(j).setX(Constants.USER_CARD_SEPERATION*j + cardsOffset);
+                        players.get(i).get(j).setY(Constants.GAME_HEIGHT-Constants.USER_CARD_HEIGHT);
                         players.get(i).get(j).setOwner(i);
                     }
                 }
@@ -301,6 +302,8 @@ public class GameWorld {
     }
 
     public void userTouched(int x, int y){
+        x = (int)((float) x * (float)Constants.GAME_WIDTH / (float) Gdx.graphics.getWidth());
+        y = (int)((float) y * (float)Constants.GAME_HEIGHT / (float) Gdx.graphics.getHeight());
         if(turn == player){
             checkPileCards(); // only called after user touch so that user can observe last pile.
             checkForDiscard(); //called so that if user has discarded cards to collect he can have them.
@@ -351,6 +354,8 @@ public class GameWorld {
     }
 
     private boolean isValidCard(Card card){
+        if(firstRound && card.getCode() != Constants.SPADE_ACE_CODE)
+            return false;
         if(pileCards.size() == 0)
             return true;
         boolean suitExists = false;

@@ -63,14 +63,20 @@ public class GameRenderer {
                 batcher.setColor(Color.WHITE);
             ArrayList<Card> player = myWorld.getPlayers().get(i);
             if(player != null){ // player could've finished the game.
+                int cardWidth = Constants.CARD_WIDTH;
+                int cardHeight = Constants.CARD_HEIGHT;
+                if(i == myWorld.getPlayer()){
+                    cardWidth = Constants.USER_CARD_WIDTH;
+                    cardHeight = Constants.USER_CARD_HEIGHT;
+                }
                 if(i != myWorld.getPlayer() && Constants.FLIP_OPPONENT_CARDS){
                     for (int j=0;j<player.size();j++){
-                        batcher.draw(AssetLoader.cardBack, player.get(j).getX(),player.get(j).getY(), Constants.CARD_WIDTH, Constants.CARD_HEIGHT);
+                        batcher.draw(AssetLoader.cardBack, player.get(j).getX(),player.get(j).getY(), cardWidth, cardHeight);
                     }
                 }
                 else{
                     for (int j=0;j<player.size();j++){
-                        batcher.draw(AssetLoader.cards[player.get(j).getCode()], player.get(j).getX(),player.get(j).getY(), Constants.CARD_WIDTH, Constants.CARD_HEIGHT);
+                        batcher.draw(AssetLoader.cards[player.get(j).getCode()], player.get(j).getX(),player.get(j).getY(), cardWidth, cardHeight);
                     }
                 }
             }

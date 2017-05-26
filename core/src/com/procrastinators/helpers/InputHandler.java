@@ -1,5 +1,6 @@
 package com.procrastinators.helpers;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
 import com.procrastinators.gameworld.GameWorld;
 
@@ -34,6 +35,7 @@ public class InputHandler implements InputProcessor {
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        Gdx.app.log("touchUp", screenX+" "+screenY);
         gameWorld.userTouched(screenX, screenY);
         return true;
     }
