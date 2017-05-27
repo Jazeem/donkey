@@ -305,8 +305,8 @@ public class GameWorld {
         x = (int)((float) x * (float)Constants.GAME_WIDTH / (float) Gdx.graphics.getWidth());
         y = (int)((float) y * (float)Constants.GAME_HEIGHT / (float) Gdx.graphics.getHeight());
         if(turn == player){
-            checkPileCards(); // only called after user touch so that user can observe last pile.
             checkForDiscard(); //called so that if user has discarded cards to collect he can have them.
+            checkPileCards(); // only called after user touch so that user can observe last pile.
             List<Card> touchedCards = new ArrayList<Card>();
             for(Card card: players.get(player)){
                 if(x >= card.getX() && x <= card.getX()+Constants.CARD_WIDTH
